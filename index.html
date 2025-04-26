@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivi des Finances | FCFA</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><style>.wallet{fill:%236366f1}</style><path class='wallet' d='M80 30H20c-5.5 0-10 4.5-10 10v30c0 5.5 4.5 10 10 10h60c5.5 0 10-4.5 10-10V40c0-5.5-4.5-10-10-10zm-60 5h60c2.8 0 5 2.2 5 5v5H15v-5c0-2.8 2.2-5 5-5zm60 40H20c-2.8 0-5-2.2-5-5V55h50v10h5v-10h10v15c0 2.8-2.2 5-5 5z'/></svg>">
+   <style>
+        :root {
+            --primary-color: #6366f1;
+            --accent-color: #4f46e5;
+            --expense-color: #ef4444;
+            --income-color: #10b981;
+            --debt-color: #f59e0b;
+            --credit-color: #10b981;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #334155;
+            --text-muted: #94a3b8;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .dark-mode {
+            --primary-color: #818cf8;
+            --accent-color: #6366f1;
+            --expense-color: #f87171;
+            --income-color: #34d399;
+            --debt-color: #fbbf24;
+            --credit-color: #34d399;
+            --bg-color: #1e293b;
+            --card-bg: #334155;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #475569;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding-bottom: 80px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        body, .card, input, select, textarea {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        header h1 {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            gap: 0.5rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .stats-container {
+            margin-top: 1.5rem;
+        }
+
+        .balance-card {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .balance-title {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+        }
+
+        .balance-amount {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .month-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        .income {
+            color: var(--income-color);
+        }
+
+        .expense {
+            color: var(--expense-color);
+        }
+
+        .debt {
+            color: var(--debt-color);
+        }
+
+        .credit {
+            color: var(--credit-color);
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: background-color 0.3s;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 250px;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-color);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        .btn-secondary {
+            background-color: var(--border-color);
+            color: var(--text-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--text-muted);
+        }
+
+        .btn-danger {
+            background-color: var(--expense-color);
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        .btn-success {
+            background-color: var(--income-color);
+        }
+
+        .btn-success:hover {
+            background-color: #059669;
+        }
+
+        .transactions-list {
+            list-style: none;
+            margin-top: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.3s;
+        }
+
+        .transaction-item:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .transaction-details {
+            flex: 1;
+        }
+
+        .transaction-title {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .transaction-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .transaction-amount {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .transaction-amount.income {
+            color: var(--income-color);
+        }
+
+        .transaction-amount.expense {
+            color: var(--expense-color);
+        }
+
+        .transaction-amount.debt {
+            color: var(--debt-color);
+        }
+
+        .transaction-amount.credit {
+            color: var(--credit-color);
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            background-color: rgba(99, 102, 241, 0.1);
+            color: var(--primary-color);
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            background-color: rgba(156, 163, 175, 0.1);
+            color: var(--text-muted);
+            margin-right: 0.5rem;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: var(--card-bg);
+            border-left: 4px solid var(--primary-color);
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            opacity: 0;
+            transform: translateX(30px);
+            transition: opacity 0.3s, transform 0.3s;
+            max-width: 320px;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-left-color: var(--income-color);
+        }
+
+        .notification.error {
+            border-left-color: var(--expense-color);
+        }
+
+        .notification.warning {
+            border-left-color: var(--debt-color);
+        }
+
+        .notification-icon {
+            font-size: 1.25rem;
+            color: var(--primary-color);
+        }
+
+        .notification.success .notification-icon {
+            color: var(--income-color);
+        }
+
+        .notification.error .notification-icon {
+            color: var(--expense-color);
+        }
+
+        .notification.warning .notification-icon {
+            color: var(--debt-color);
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-title {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .notification-message {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .add-transaction-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            z-index: 90;
+        }
+
+        .add-transaction-btn:hover {
+            background-color: var(--accent-color);
+        }
+
+        .add-transaction-btn:active {
+            transform: scale(0.95);
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+
+        .modal.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s forwards;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: color 0.3s;
+        }
+
+        .modal-close:hover {
+            color: var(--text-color);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        .horizontal-tabs {
+            display: flex;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-muted);
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            color: var(--primary-color);
+        }
+
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 1rem;
+            text-align: center;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            color: var(--border-color);
+            margin-bottom: 1rem;
+        }
+
+        .empty-text {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.85rem;
+        }
+
+        .filter-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .actions-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-pending {
+            background-color: rgba(251, 191, 36, 0.1);
+            color: #f59e0b;
+        }
+
+        .badge-paid {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .badge-overdue {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .tags-input {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .tag-input {
+            flex: 1;
+            min-width: 100px;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: var(--text-color);
+        }
+
+        .tag-item {
+            display: inline-flex;
+            align-items: center;
+            background-color: rgba(99, 102, 241, 0.1);
+            color: var(--primary-color);
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+        }
+
+        .tag-remove {
+            margin-left: 0.25rem;
+            cursor: pointer;
+            font-size: 0.65rem;
+        }
+
+        .status-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .status-option {
+            flex: 1;
+            text-align: center;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .status-option.active {
+            border-color: var(--primary-color);
+            background-color: rgba(99, 102, 241, 0.1);
+        }
+
+        .debt-type-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .debt-type-option {
+            flex: 1;
+            text-align: center;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .debt-type-option.active {
+            border-color: var(--primary-color);
+            background-color: rgba(99, 102, 241, 0.1);
+        }
+
+        .debt-type-option.borrowed.active {
+            border-color: var(--debt-color);
+            background-color: rgba(245, 158, 11, 0.1);
+        }
+
+        .debt-type-option.lent.active {
+            border-color: var(--credit-color);
+            background-color: rgba(16, 185, 129, 0.1);
+        }
+
+        body, .card, input, select, textarea {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        @media (min-width: 768px) {
+            .stats-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1.5rem;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .balance-card {
+                margin-bottom: 1rem;
+            }
+            
+            .chart-container {
+                height: 200px;
+            }
+            
+            .modal-content {
+                max-width: 100%;
+            }
+        }
+
+        /* Animation shake for bell notification */
+        @keyframes bell-shake {
+            0% { transform: rotate(0); }
+            15% { transform: rotate(15deg); }
+            30% { transform: rotate(-15deg); }
+            45% { transform: rotate(10deg); }
+            60% { transform: rotate(-10deg); }
+            75% { transform: rotate(5deg); }
+            85% { transform: rotate(-5deg); }
+            100% { transform: rotate(0); }
+        }
+
+        .bell-shake {
+            animation: bell-shake 0.7s cubic-bezier(.36,.07,.19,.97) both;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container header-content">
+            <h1><i class="fas fa-wallet"></i> Finance Tracker</h1>
+            <div class="header-actions">
+                <button class="theme-toggle" id="theme-toggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container stats-container">
+        <div class="balance-card">
+            <div class="balance-title">Solde total</div>
+            <div class="balance-amount" id="total-balance">0 FCFA</div>
+            <div class="month-stats">
+                <div class="stat-item">
+                    <div class="stat-label">Revenus (mois)</div>
+                    <div class="stat-value income" id="month-income">0 FCFA</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Dépenses (mois)</div>
+                    <div class="stat-value expense" id="month-expenses">0 FCFA</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="filter-container">
+            <div class="filter-group">
+                <label for="month-filter">Mois</label>
+                <select id="month-filter" class="form-control">
+                    <option value="0">Janvier</option>
+                    <option value="1">Février</option>
+                    <option value="2">Mars</option>
+                    <option value="3">Avril</option>
+                    <option value="4">Mai</option>
+                    <option value="5">Juin</option>
+                    <option value="6">Juillet</option>
+                    <option value="7">Août</option>
+                    <option value="8">Septembre</option>
+                    <option value="9">Octobre</option>
+                    <option value="10">Novembre</option>
+                    <option value="11">Décembre</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="year-filter">Année</label>
+                <select id="year-filter" class="form-control">
+                    <!-- Years will be populated dynamically -->
+                </select>
+            </div>
+        </div>
+
+        <div class="actions-container">
+            <button class="btn btn-secondary" id="export-json-btn">
+                <i class="fas fa-file-export"></i> Exporter JSON
+            </button>
+            <button class="btn btn-secondary" id="export-csv-btn">
+                <i class="fas fa-file-csv"></i> Exporter CSV
+            </button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-chart-line"></i> Évolution du solde</h2>
+                <div class="chart-container">
+                    <canvas id="balance-chart"></canvas>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-chart-pie"></i> Répartition des dépenses</h2>
+                <div class="chart-container">
+                    <canvas id="expenses-chart"></canvas>
+                </div>
+                <div class="chart-legend" id="expenses-legend"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title"><i class="fas fa-list"></i> Transactions récentes</h2>
+            
+            <div class="horizontal-tabs">
+                <div class="tab active" data-filter="all">Toutes</div>
+                <div class="tab" data-filter="income">Revenus</div>
+                <div class="tab" data-filter="expense">Dépenses</div>
+                <div class="tab" data-filter="debt">Dettes</div>
+            </div>
+            
+            <ul class="transactions-list" id="transactions-list">
+                <!-- Transactions will be added here dynamically -->
+            </ul>
+            
+            <div class="empty-state" id="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <div class="empty-text">Aucune transaction pour le moment</div>
+                <button class="btn" id="add-first-transaction-btn">
+                    <i class="fas fa-plus"></i> Ajouter une transaction
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="add-transaction-btn" id="add-transaction-btn">
+        <i class="fas fa-plus"></i>
+    </div>
+
+    <!-- Transaction Modal -->
+    <div class="modal" id="transaction-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Nouvelle transaction</h3>
+                <button class="modal-close" id="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="transaction-form">
+                    <div class="form-group">
+                        <label for="transaction-type">Type de transaction</label>
+                        <select id="transaction-type" required>
+                            <option value="expense">Dépense</option>
+                            <option value="income">Revenu</option>
+                            <option value="debt">Dette</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="transaction-amount">Montant (FCFA)</label>
+                        <input type="number" id="transaction-amount" placeholder="Montant" required min="1">
+                    </div>
+                    
+                    <div class="form-group" id="category-group">
+                        <label for="transaction-category">Catégorie</label>
+                        <select id="transaction-category" required>
+                            <!-- Categories will be loaded dynamically -->
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="debt-type-group" style="display: none;">
+                        <label>Type de dette</label>
+                        <div class="debt-type-selector">
+                            <div class="debt-type-option borrowed" data-type="borrowed">
+                                <i class="fas fa-hand-holding-usd"></i> J'ai emprunté
+                            </div>
+                            <div class="debt-type-option lent" data-type="lent">
+                                <i class="fas fa-hand-holding-heart"></i> J'ai prêté
+                            </div>
+                        </div>
+                        <input type="hidden" id="debt-type" value="borrowed">
+                    </div>
+                    
+                    <div class="form-group" id="debt-person-group" style="display: none;">
+                        <label for="debt-person">Personne concernée</label>
+                        <input type="text" id="debt-person" placeholder="Nom de la personne">
+                    </div>
+                    
+                    <div class="form-group" id="debt-status-group" style="display: none;">
+                        <label>Statut</label>
+                        <div class="status-selector">
+                            <div class="status-option" data-status="pending">
+                                <i class="fas fa-clock"></i> En attente
+                            </div>
+                            <div class="status-option" data-status="paid">
+                                <i class="fas fa-check-circle"></i> Payé
+                            </div>
+                            <div class="status-option" data-status="overdue">
+                                <i class="fas fa-exclamation-circle"></i> En retard
+                            </div>
+                        </div>
+                        <input type="hidden" id="debt-status" value="pending">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="transaction-description">Description</label>
+                        <input type="text" id="transaction-description" placeholder="Description de la transaction">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="transaction-date">Date</label>
+                        <input type="date" id="transaction-date" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="transaction-tags">Tags</label>
+                        <div class="tags-input" id="tags-container">
+                            <input type="text" id="transaction-tags" class="tag-input" placeholder="Ajouter un tag">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-transaction">Annuler</button>
+                <button class="btn" id="save-transaction">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <div class="notification-icon">
+            <i class="fas fa-bell bell-shake"></i>
+        </div>
+        <div class="notification-content">
+            <div class="notification-title">Succès</div>
+            <div class="notification-message">Transaction ajoutée avec succès</div>
+        </div>
+    </div>
+    <script src="assets/js/app.js" defer></script>
+</body>
+</html>
