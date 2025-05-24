@@ -1,5 +1,5 @@
 // Constants
-const API_BASE_URL = 'http://localhost/finance-tracker';
+const API_BASE_URL = 'http://localhost/projets/MoneyTrack';
 const EXPENSE_CATEGORIES = [
     { id: 'food', label: 'Alimentation', icon: 'fas fa-utensils', color: '#ef4444' },
     { id: 'transport', label: 'Transport', icon: 'fas fa-car', color: '#f59e0b' },
