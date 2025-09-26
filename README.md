@@ -1,6 +1,6 @@
 # MoneyTrack
 
-<div align="center">
+<div align="left">
 
 ![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-yellow.svg)
 ![Chart.js](https://img.shields.io/badge/Chart.js-4.0+-orange.svg)
