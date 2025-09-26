@@ -54,7 +54,7 @@ MoneyTrack is a simple expense and income tracking application designed to help 
 
 ## Tech Stack
 
-<div align="center">
+<div align="left">
 
 | Technology | Purpose | Version |
 |------------|---------|---------|
